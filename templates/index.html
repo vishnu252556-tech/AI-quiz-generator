@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoValue AI | California House Price Prediction Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Main Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-house-laptop"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>GeoValue <span>AI</span></h1>
+                    <p>ML Housing Engine</p>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="predictor-tab">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Price Predictor</span>
+                </button>
+                <button class="nav-btn" data-tab="analytics-tab">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>ML Analytics</span>
+                </button>
+                <button class="nav-btn" data-tab="explorer-tab">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Dataset Explorer</span>
+                </button>
+                <button class="nav-btn" data-tab="map-tab" id="map-nav-btn">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>Geographic Map</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="model-badge">
+                    <div class="badge-dot pulse"></div>
+                    <div class="badge-text">
+                        <span class="badge-title">Active Engine</span>
+                        <span class="badge-val" id="active-engine-text">Gradient Boosting</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top bar -->
+            <header class="top-bar">
+                <div class="page-title-section">
+                    <h2 id="current-tab-title">House Price Predictor</h2>
+                    <p id="current-tab-desc">Adjust variables to run the Gradient Boosting Machine Learning model</p>
+                </div>
+                <div class="system-time">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="time-display">00:00:00</span>
+                </div>
+            </header>
+
+            <!-- Tab Container -->
+            <div class="tab-content-wrapper">
+                
+                <!-- 1. PREDICTOR TAB -->
+                <section id="predictor-tab" class="tab-panel active">
+                    <div class="grid-layout predictor-grid">
+                        <!-- Inputs Panel -->
+                        <div class="dashboard-card form-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-sliders-h icon-gradient"></i> Input House Features</h3>
+                                <p>Adjust sliders or type directly to predict median block housing values</p>
+                            </div>
+                            
+                            <form id="prediction-form" class="prediction-form">
+                                <!-- Income Feature -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="MedInc"><i class="fa-solid fa-wallet"></i> Median Household Income</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="MedInc_num" step="0.1" min="0.5" max="15.0" value="3.8">
+                                            <span class="unit-tag">$10k blocks</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="MedInc" name="MedInc" min="0.5" max="15.0" step="0.1" value="3.8">
+                                    </div>
+                                    <span class="help-text">Median income in block group (e.g. 3.8 = $38,000/yr)</span>
+                                </div>
+
+                                <!-- Age Feature -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="HouseAge"><i class="fa-solid fa-hourglass-half"></i> Median House Age</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="HouseAge_num" min="1" max="52" value="28">
+                                            <span class="unit-tag">years</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="HouseAge" name="HouseAge" min="1" max="52" step="1" value="28">
+                                    </div>
+                                    <span class="help-text">Median age of houses in the block</span>
+                                </div>
+
+                                <!-- Average Rooms -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="AveRooms"><i class="fa-solid fa-door-open"></i> Average Rooms</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="AveRooms_num" step="0.1" min="1.0" max="12.0" value="5.4">
+                                            <span class="unit-tag">rooms</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="AveRooms" name="AveRooms" min="1.0" max="12.0" step="0.1" value="5.4">
+                                    </div>
+                                    <span class="help-text">Average number of rooms per household</span>
+                                </div>
+
+                                <!-- Average Bedrooms -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="AveBedrms"><i class="fa-solid fa-bed"></i> Average Bedrooms</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="AveBedrms_num" step="0.1" min="0.5" max="5.0" value="1.1">
+                                            <span class="unit-tag">bedrooms</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="AveBedrms" name="AveBedrms" min="0.5" max="5.0" step="0.1" value="1.1">
+                                    </div>
+                                    <span class="help-text">Average number of bedrooms per household</span>
+                                </div>
+
+                                <!-- Population -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="Population"><i class="fa-solid fa-users"></i> Block Population</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="Population_num" min="3" max="10000" value="1425">
+                                            <span class="unit-tag">residents</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="Population" name="Population" min="3" max="10000" step="10" value="1425">
+                                    </div>
+                                    <span class="help-text">Total number of people residing in the block group</span>
+                                </div>
+
+                                <!-- Average Occupancy -->
+                                <div class="form-group">
+                                    <div class="form-label-row">
+                                        <label for="AveOccup"><i class="fa-solid fa-house-user"></i> Avg Household Occupancy</label>
+                                        <div class="input-unit">
+                                            <input type="number" id="AveOccup_num" step="0.1" min="1.0" max="6.0" value="3.0">
+                                            <span class="unit-tag">members</span>
+                                        </div>
+                                    </div>
+                                    <div class="slider-row">
+                                        <input type="range" id="AveOccup" name="AveOccup" min="1.0" max="6.0" step="0.1" value="3.0">
+                                    </div>
+                                    <span class="help-text">Average number of household members</span>
+                                </div>
+
+                                <!-- Lat/Long Grid -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <div class="form-label-row">
+                                            <label for="Latitude"><i class="fa-solid fa-map-pin"></i> Latitude</label>
+                                            <input type="number" id="Latitude" name="Latitude" step="0.01" min="32.5" max="42.5" value="35.6" class="grid-input">
+                                        </div>
+                                        <span class="help-text">Range: 32.5 to 42.5</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-label-row">
+                                            <label for="Longitude"><i class="fa-solid fa-map-pin"></i> Longitude</label>
+                                            <input type="number" id="Longitude" name="Longitude" step="0.01" min="-124.5" max="-114.0" value="-119.5" class="grid-input">
+                                        </div>
+                                        <span class="help-text">Range: -124.5 to -114.0</span>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn-primary" id="predict-btn">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Predict Valuation
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Results Panel -->
+                        <div class="predictor-results-column">
+                            <!-- Live Prediction Card -->
+                            <div class="dashboard-card prediction-card glow-card">
+                                <div class="card-header borderless">
+                                    <span class="status-indicator-badge"><i class="fa-solid fa-brain"></i> Model Inference Ready</span>
+                                </div>
+                                <div class="prediction-display">
+                                    <p class="pred-label">PREDICTED HOUSE VALUATION</p>
+                                    <h2 class="pred-value" id="prediction-output">$206,856</h2>
+                                    <div class="pred-confidence-container">
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: 82.5%;"></div>
+                                        </div>
+                                        <span class="confidence-label">Model Reliability: 82.5% (R²)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="prediction-breakdown">
+                                    <div class="breakdown-item">
+                                        <div class="item-icon bg-cyan"><i class="fa-solid fa-chart-line"></i></div>
+                                        <div class="item-text">
+                                            <span class="item-label">Comparison to CA Average</span>
+                                            <span class="item-val" id="pred-diff-average">0% (Average)</span>
+                                        </div>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <div class="item-icon bg-violet"><i class="fa-solid fa-money-bill-wave"></i></div>
+                                        <div class="item-text">
+                                            <span class="item-label">Estimated Price per Room</span>
+                                            <span class="item-val" id="pred-price-per-room">$38,306 / room</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Location Guide / Quick Select Box -->
+                            <div class="dashboard-card guide-card">
+                                <div class="card-header">
+                                    <h3><i class="fa-solid fa-map-location"></i> Geographical Preset Coordinates</h3>
+                                    <p>Select a region in California to quickly load representative coordinates</p>
+                                </div>
+                                <div class="preset-regions">
+                                    <button class="preset-btn" data-lat="34.05" data-lng="-118.24">
+                                        <i class="fa-solid fa-city"></i> Los Angeles Area
+                                    </button>
+                                    <button class="preset-btn" data-lat="37.77" data-lng="-122.41">
+                                        <i class="fa-solid fa-bridge-water"></i> San Francisco (Bay Area)
+                                    </button>
+                                    <button class="preset-btn" data-lat="32.71" data-lng="-117.16">
+                                        <i class="fa-solid fa-umbrella-beach"></i> San Diego Beach Block
+                                    </button>
+                                    <button class="preset-btn" data-lat="36.77" data-lng="-119.74">
+                                        <i class="fa-solid fa-tractor"></i> Central Valley (Fresno)
+                                    </button>
+                                    <button class="preset-btn" data-lat="34.42" data-lng="-119.69">
+                                        <i class="fa-solid fa-tree"></i> Santa Barbara Coast
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. ANALYTICS TAB -->
+                <section id="analytics-tab" class="tab-panel">
+                    <!-- Metrics Cards Grid -->
+                    <div class="metrics-cards-grid">
+                        <div class="dashboard-card metric-info-card border-violet">
+                            <span class="card-mini-title">Best Model R² Score</span>
+                            <div class="card-main-val text-violet" id="best-r2-val">82.47%</div>
+                            <span class="card-sub-info">Gradient Boosting Regressor</span>
+                        </div>
+                        <div class="dashboard-card metric-info-card border-cyan">
+                            <span class="card-mini-title">Mean Absolute Error (MAE)</span>
+                            <div class="card-main-val text-cyan" id="best-mae-val">$31,866</div>
+                            <span class="card-sub-info">Average prediction error margin</span>
+                        </div>
+                        <div class="dashboard-card metric-info-card border-emerald">
+                            <span class="card-mini-title">Root Mean Squared Error</span>
+                            <div class="card-main-val text-emerald" id="best-rmse-val">$48,150</div>
+                            <span class="card-sub-info">Sensitive to large outliers</span>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid-layout double-column">
+                        <!-- Chart 1: Feature Importances -->
+                        <div class="dashboard-card chart-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-key icon-gradient"></i> Feature Importance Mapping</h3>
+                                <p>Shows how much each feature influences the final prediction value</p>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="featureImportanceChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Chart 2: Model Comparison -->
+                        <div class="dashboard-card chart-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-code-compare icon-gradient"></i> Model Accuracy Comparison (R²)</h3>
+                                <p>Evaluating different machine learning architectures on the testing split</p>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="modelComparisonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scatter plot actual vs predicted -->
+                    <div class="dashboard-card chart-card mt-20">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-circle-nodes icon-gradient"></i> Actual vs. Predicted Price Regression Scatter (Sample)</h3>
+                            <p>Plotting predicted house values against actual values in our test set</p>
+                        </div>
+                        <div class="chart-container tall-chart">
+                            <canvas id="actualVsPredictedChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. DATASET EXPLORER TAB -->
+                <section id="explorer-tab" class="tab-panel">
+                    <!-- Feature Stat Summary Cards -->
+                    <div class="stat-summary-wrapper">
+                        <h3>Dataset Feature Statistics</h3>
+                        <div class="stats-carousel-grid" id="stats-summary-grid">
+                            <!-- Dynamic stat cards injected here -->
+                            <div class="loading-state">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading stats...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Table Section -->
+                    <div class="dashboard-card table-card">
+                        <div class="card-header flex-header">
+                            <div>
+                                <h3><i class="fa-solid fa-table-list icon-gradient"></i> Dataset Sample Explorer</h3>
+                                <p>Displaying a representative subset of 500 records with coordinates and prediction errors</p>
+                            </div>
+                            <div class="table-search-row">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="table-search" placeholder="Search sample table...">
+                            </div>
+                        </div>
+                        <div class="table-scroll-wrapper">
+                            <table class="explorer-table" id="sample-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Med. Income</th>
+                                        <th>House Age</th>
+                                        <th>Avg. Rooms</th>
+                                        <th>Avg. Bedrooms</th>
+                                        <th>Population</th>
+                                        <th>Avg. Occup.</th>
+                                        <th>Coordinates</th>
+                                        <th>Actual Price</th>
+                                        <th>Predicted Price</th>
+                                        <th>Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sample-table-body">
+                                    <!-- Dynamic rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Table Pagination -->
+                        <div class="table-pagination">
+                            <div class="pagination-info">
+                                Showing <span id="pag-start">1</span> to <span id="pag-end">10</span> of <span id="pag-total">500</span> records
+                            </div>
+                            <div class="pagination-controls">
+                                <button class="pag-btn" id="pag-prev" disabled><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                                <div class="pag-numbers" id="pag-numbers-container">
+                                    <!-- numbers here -->
+                                </div>
+                                <button class="pag-btn" id="pag-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. GEOGRAPHIC MAP TAB -->
+                <section id="map-tab" class="tab-panel">
+                    <div class="grid-layout map-grid">
+                        <div class="dashboard-card map-card">
+                            <div class="card-header borderless">
+                                <h3><i class="fa-solid fa-earth-americas icon-gradient"></i> California Spatial Housing Distribution</h3>
+                                <p>Interactive mapping of 500 test-set records color-coded by house values. Click on dots to view metrics.</p>
+                            </div>
+                            <!-- Map Container -->
+                            <div class="map-view-container">
+                                <div id="california-map"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Map Details Card -->
+                        <div class="dashboard-card map-details-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-info icon-gradient"></i> Spatial Insights</h3>
+                                <p>Analysis of real estate value patterns by geography</p>
+                            </div>
+                            <div class="map-legend">
+                                <h4>Price Legend (Target Valuation)</h4>
+                                <div class="legend-scale">
+                                    <div class="legend-color-bar"></div>
+                                    <div class="legend-labels">
+                                        <span>$15k (Low)</span>
+                                        <span>$250k (Avg)</span>
+                                        <span>$500k+ (High)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-bullet">
+                                <i class="fa-solid fa-compass text-violet"></i>
+                                <div>
+                                    <h5>Coastal vs Inland Premium</h5>
+                                    <p>Points concentrated near San Francisco and the Los Angeles coastline exhibit dramatically higher valuations ($400,000+), correlating with higher median incomes.</p>
+                                </div>
+                            </div>
+                            <div class="insight-bullet">
+                                <i class="fa-solid fa-circle-nodes text-cyan"></i>
+                                <div>
+                                    <h5>Prediction Errors</h5>
+                                    <p>The model performs highly consistently in sub-coastal blocks, but absolute residuals expand slightly in ultra-high value ($500k capping) properties due to feature limits.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="map-selected-point-card" id="selected-map-point">
+                                <h4>Selected Data Point</h4>
+                                <p class="placeholder-text">Click a point on the map to load its specific details and predicted price accuracy.</p>
+                                <div class="selected-point-details hidden" id="point-details-display">
+                                    <div class="details-row">
+                                        <span>Coord:</span>
+                                        <strong id="m-coord">34.05, -118.24</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>Med Income:</span>
+                                        <strong id="m-income">4.2</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>House Age:</span>
+                                        <strong id="m-age">24 yrs</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>Avg Rooms:</span>
+                                        <strong id="m-rooms">5.2</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>Actual Valuation:</span>
+                                        <strong class="text-emerald" id="m-actual">$240,000</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>Predicted Valuation:</span>
+                                        <strong class="text-cyan" id="m-predicted">$231,200</strong>
+                                    </div>
+                                    <div class="details-row">
+                                        <span>Deviation Residual:</span>
+                                        <strong class="text-violet" id="m-residual">-$8,800 (-3.6%)</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js and Leaflet JS Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Main Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
